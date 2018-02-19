@@ -8,3 +8,5 @@ Usage:
   
 Example:
 * ./support/scripts/scanpypi3 websocket-server -o package
+
+For licensing issues please refer directly to https://buildroot.org

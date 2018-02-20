@@ -85,6 +85,8 @@ def pkg_buildroot_name(pkg_name):
 class DownloadFailed(Exception):
     pass
 
+fromUrl = None
+
 class BuildrootPackage():
     """This class's methods are not meant to be used individually please
     use them in the correct order:
@@ -155,6 +157,15 @@ class BuildrootPackage():
         """
         Download a package using metadata from pypi
         """
+        if fromUrl:
+            print("using the given url="+fromUrl)
+            self.metadata['urls'] = [{
+                'packagetype': 'sdist',
+                'url': fromUrl,
+                'md5_digest': None}]
+            urlpath = urllib.parse.urlparse(fromUrl).path
+            self.metadata['urls'][0]['filename'] = os.path.basename(urlpath)
+
         try:
             self.metadata['urls'][0]['filename']
         except IndexError:
@@ -167,7 +178,7 @@ class BuildrootPackage():
                 'md5_digest': None}]
             # In this case, we can't get the name of the downloaded file
             # from the pypi api, so we need to find it, this should work
-            urlpath = urllib2.urlparse.urlparse(
+            urlpath = urllib.parse.urlparse(
                 self.metadata['info']['download_url']).path
             # urlparse().path give something like
             # /path/to/file-version.tar.gz
@@ -252,9 +263,11 @@ class BuildrootPackage():
                 version=self.version)
             print("Trying instead with '_<>-': "+self.tmp_extract)
             if not os.path.exists(self.tmp_extract):
-                print("Error: this path also doesn't exist!")
-                print(os.listdir(tmp_pkg))
-                sys.exit(100)
+                tmp_extract = '{folder}/{whatever}'
+                self.tmp_extract = tmp_extract.format(
+                    folder=tmp_pkg,
+                    whatever=os.listdir(tmp_pkg)[0])
+                print("Let's try: "+self.tmp_extract)
 
     def load_setup(self):
         """
@@ -575,6 +588,12 @@ def main():
                         Default is ./package
                         """,
                         default='./package')
+    parser.add_argument("-u", "--fromUrl",
+                        help="""
+                        url to override the pypi database.
+                        Default is don't override
+                        """,
+                        default='')
 
     args = parser.parse_args()
     packages = list(set(args.packages))
@@ -582,6 +601,9 @@ def main():
     # tmp_path is where we'll extract the files later
     tmp_prefix = 'scanpypi-'
     pkg_folder = args.output
+    global fromUrl
+    if args.fromUrl and len(args.fromUrl)>0:
+        fromUrl = args.fromUrl
     tmp_path = tempfile.mkdtemp(prefix=tmp_prefix)
     try:
         for real_pkg_name in packages:
@@ -667,7 +689,8 @@ def main():
             print()
             # printing an empty line for visual confort
     finally:
-        shutil.rmtree(tmp_path)
+        #shutil.rmtree(tmp_path)
+        print("leaving sources at "+tmp_path)
 
 if __name__ == "__main__":
     main()

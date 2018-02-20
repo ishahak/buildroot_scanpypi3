@@ -242,12 +242,19 @@ class BuildrootPackage():
             version=self.version)
         if not os.path.exists(self.tmp_extract):
             print("Couldn't open "+self.tmp_extract)
-            self.metadata_name = self.metadata_name.replace("-","_")
+            if self.metadata_name.find("-")>-1:
+                self.metadata_name = self.metadata_name.replace("-","_")
+            else:
+                self.metadata_name = self.metadata_name.replace("_","-")
             self.tmp_extract = tmp_extract.format(
                 folder=tmp_pkg,
                 name=self.metadata_name,
                 version=self.version)
-            print("Trying instead with '_': "+self.tmp_extract);
+            print("Trying instead with '_<>-': "+self.tmp_extract)
+            if not os.path.exists(self.tmp_extract):
+                print("Error: this path also doesn't exist!")
+                print(os.listdir(tmp_pkg))
+                sys.exit(100)
 
     def load_setup(self):
         """
@@ -265,8 +272,12 @@ class BuildrootPackage():
             # called through the if __name__ == '__main__' directive.
             # In this case, we can only pray that it is called through a
             # function called main() in setup.py.
-            setup.main([]) # Will raise AttributeError if not found
-            self.setup_metadata = self.setup_args[self.metadata_name]
+            try:
+                setup.main([]) # Will raise AttributeError if not found
+                self.setup_metadata = self.setup_args[self.metadata_name]
+            except TypeError: #main doesn't want any arguments
+                setup.main() # Will raise AttributeError if not found
+                self.setup_metadata = self.setup_args[self.metadata_name]
         # Here we must remove the module the hard way.
         # We must do this because of a very sepcific case: if a package calls
         # setup from the __main__ but does not come with a 'main()' function,

@@ -5,15 +5,23 @@ This is a porting of buildroot's scanpypi for Python 3, so that Python3 packages
 see discussion here:
 https://stackoverflow.com/questions/48867457/adding-python3-packages-to-buildroot
 
-**Usage:**
+## Usage:
 1. Copy scanpypi3 into &lt;buildroot&gt;/support/scripts
 2. Use it to install packages
   
-**Example:**
-* ./support/scripts/scanpypi3 websocket-server -o package
+### Example:
+* `./support/scripts/scanpypi3 websocket-server -o package`
 
-For licensing issues please refer directly to https://buildroot.org
+### Install directly from GitHub:
+Sometimes the PyPI version is not up-to-date, so I have added a way to install from github:
+`./support/scripts/scanpypi3 websocket-server -o package -u https://github.com/Pithikos/python-websocket-server/archive/master.tar.gz`
 
-**Important Note:** 
+**Note:** the URL should be constructed from `https://github.com` + `/owner-name` + `/repo-name` + `/archive/master.tar.gz`
 
+
+## Important Note:
 Although I didn't see anything about it in the docs, it seems that in order to have the new package appear in the menu for external Python packages (Target packages -> interpreter languages -> External Python modules), the file package/Config.in should be added with an appropriate line. A rumor for this is appearing here: http://www.armadeus.org/wiki/index.php?title=Buildroot_Packages
+
+
+## License:
+This code is owned by the buildroot project: https://buildroot.org

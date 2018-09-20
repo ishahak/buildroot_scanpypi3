@@ -24,6 +24,7 @@ import tempfile
 import imp
 import time
 import pathlib
+import ssl
 from functools import wraps
 
 def setup_decorator(func, method):
@@ -132,10 +133,16 @@ class BuildrootPackage():
         """
         Fetch a package's metadata from the python package index
         """
-        self.metadata_url = 'https://pypi.python.org/pypi/{pkg}/json'.format(
+        #self.metadata_url = 'https://pypi.python.org/pypi/{pkg}/json'.format(
+        #    pkg=self.real_name)
+        self.metadata_url = 'https://pypi.org/pypi/{pkg}/json'.format(
             pkg=self.real_name)
         try:
-            pkg_json = urllib.request.urlopen(self.metadata_url).read().decode()
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            pkg_json = urllib.request.urlopen(self.metadata_url, context=ctx).read().decode()
         except urllib.error.HTTPError as error:
             print('ERROR:', error.getcode(), error.msg, file=sys.stderr)
             print('ERROR: Could not find package {pkg}.\n'
@@ -143,7 +150,8 @@ class BuildrootPackage():
                   'https://pypi.python.org/pypi/ '
                   .format(pkg=self.real_name))
             raise
-        except urllib.error.URLError:
+        except urllib.error.URLError as error:
+            print('ERROR:', error.reason, file=sys.stderr)
             print('ERROR: Could not find package {pkg}.\n'
                   'Check syntax inside the python package index:\n'
                   'https://pypi.python.org/pypi/ '
